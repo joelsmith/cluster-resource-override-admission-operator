@@ -1,0 +1,132 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: croa-operator-default-deny
+spec:
+  podSelector:
+    matchLabels:
+      clusterresourceoverride.operator: "true"
+  policyTypes:
+  - Ingress
+  - Egress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: croa-default-deny
+spec:
+  podSelector:
+    matchLabels:
+      clusterresourceoverride: "true"
+  policyTypes:
+  - Ingress
+  - Egress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: croa-operator-allow-egress-to-dns
+spec:
+  podSelector:
+    matchLabels:
+      clusterresourceoverride.operator: "true"
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: openshift-dns
+      podSelector:
+        matchLabels:
+          dns.operator.openshift.io/daemonset-dns: default
+    ports:
+    - protocol: TCP
+      port: 5353
+    - protocol: UDP
+      port: 5353
+  policyTypes:
+  - Egress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: croa-allow-egress-to-dns
+spec:
+  podSelector:
+    matchLabels:
+      clusterresourceoverride: "true"
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: openshift-dns
+      podSelector:
+        matchLabels:
+          dns.operator.openshift.io/daemonset-dns: default
+    ports:
+    - protocol: TCP
+      port: 5353
+    - protocol: UDP
+      port: 5353
+  policyTypes:
+  - Egress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: croa-operator-allow-egress-to-api-server
+spec:
+  podSelector:
+    matchLabels:
+      clusterresourceoverride.operator: "true"
+  egress:
+  - ports:
+    - protocol: TCP
+      port: 6443
+  policyTypes:
+  - Egress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: croa-allow-egress-to-api-server
+spec:
+  podSelector:
+    matchLabels:
+      clusterresourceoverride: "true"
+  egress:
+  - ports:
+    - protocol: TCP
+      port: 6443
+  policyTypes:
+  - Egress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: croa-allow-ingress-to-healthz
+spec:
+  podSelector:
+    matchLabels:
+      clusterresourceoverride.operator: "true"
+  ingress:
+  - ports:
+    - protocol: TCP
+      port: 8080
+  policyTypes:
+  - Ingress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: croa-allow-ingress-to-webhook
+spec:
+  podSelector:
+    matchLabels:
+      clusterresourceoverride: "true"
+  ingress:
+  - ports:
+    - protocol: TCP
+      port: 9400
+  policyTypes:
+  - Ingress
