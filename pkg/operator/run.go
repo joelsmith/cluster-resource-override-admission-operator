@@ -3,6 +3,8 @@ package operator
 import (
 	"fmt"
 	"net/http"
+	"os"
+	"strings"
 	"time"
 
 	"github.com/openshift/cluster-resource-override-admission-operator/pkg/secondarywatch"
@@ -47,16 +49,29 @@ func (r *runner) Run(config *Config, errorCh chan<- error) {
 		close(r.done)
 		klog.V(1).Infof("[operator] exiting")
 	}()
+	klog.V(1).Infof("All Environment Variables:")
+	for _, envVar := range os.Environ() {
+		// Split the "key=value" string to get key and value separately
+		parts := strings.SplitN(envVar, "=", 2)
+		if len(parts) == 2 {
+			klog.V(1).Infof("%s=%s", parts[0], parts[1])
+		} else {
+			klog.V(1).Infof("%s", envVar) // In case of a malformed entry
+		}
+	}
 
+	klog.V(1).Infof("[operator] creating client")
 	clients, err := runtime.NewClient(config.RestConfig)
 	if err != nil {
 		errorCh <- err
 		return
 	}
 
+	klog.V(1).Infof("[operator] creating operand context")
 	context := runtime.NewOperandContext(config.Name, config.Namespace, DefaultCR, config.OperandImage, config.OperandVersion)
 	apiregistrationv1.AddToScheme(scheme.Scheme)
 
+	klog.V(1).Infof("[operator] creating lister")
 	// create lister(s) for secondary resources
 	lister, starter := secondarywatch.New(&secondarywatch.Options{
 		Client:       clients,
@@ -64,6 +79,7 @@ func (r *runner) Run(config *Config, errorCh chan<- error) {
 		Namespace:    config.Namespace,
 	})
 
+	klog.V(1).Infof("[operator] creating controller")
 	// start the controllers
 	c, enqueuer, err := clusterresourceoverride.New(&clusterresourceoverride.Options{
 		ResyncPeriod:   DefaultResyncPeriodPrimaryResource,
@@ -77,12 +93,14 @@ func (r *runner) Run(config *Config, errorCh chan<- error) {
 		return
 	}
 
+	klog.V(1).Infof("[operator] creating watches for secondary resources")
 	// setup watches for secondary resources
 	if err := starter.Start(enqueuer, config.ShutdownContext); err != nil {
 		errorCh <- fmt.Errorf("failed to start watch on secondary resources - %s", err.Error())
 		return
 	}
 
+	klog.V(1).Infof("[operator] creating runner")
 	runner := controller.NewRunner()
 	runnerErrorCh := make(chan error, 0)
 	go runner.Run(config.ShutdownContext, c, runnerErrorCh)
@@ -91,6 +109,7 @@ func (r *runner) Run(config *Config, errorCh chan<- error) {
 		return
 	}
 
+	klog.V(1).Infof("[operator] creating health check HTTP endpoint")
 	// Serve a simple HTTP health check.
 	healthMux := http.NewServeMux()
 	healthMux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
