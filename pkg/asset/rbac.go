@@ -124,6 +124,20 @@ func (s *rbac) New() []*RBACItem {
 				Rules: []rbacv1.PolicyRule{
 					{
 						APIGroups: []string{
+							"security.openshift.io",
+						},
+						Resources: []string{
+							"securitycontextconstraints",
+						},
+						ResourceNames: []string{
+							"privileged",
+						},
+						Verbs: []string{
+							"use",
+						},
+					},
+					{
+						APIGroups: []string{
 							"admissionregistration.k8s.io",
 						},
 						Resources: []string{

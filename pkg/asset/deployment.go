@@ -91,6 +91,12 @@ func (d *deployment) New() *appsv1.Deployment {
 				Spec: corev1.PodSpec{
 					NodeSelector:       DefaultNodeSelector,
 					ServiceAccountName: values.ServiceAccountName,
+					SecurityContext: &corev1.PodSecurityContext{
+						RunAsNonRoot: pointer.BoolPtr(false),
+						SeccompProfile: &corev1.SeccompProfile{
+							Type: "RuntimeDefault",
+						},
+					},
 					Containers: []corev1.Container{
 						{
 							Name:            d.Name(),
@@ -121,7 +127,7 @@ func (d *deployment) New() *appsv1.Deployment {
 								Capabilities: &corev1.Capabilities{
 									Drop: []corev1.Capability{"ALL"},
 								},
-								RunAsNonRoot: pointer.BoolPtr(true),
+								RunAsNonRoot: pointer.BoolPtr(false),
 								SeccompProfile: &corev1.SeccompProfile{
 									Type: "RuntimeDefault",
 								},
@@ -144,6 +150,32 @@ func (d *deployment) New() *appsv1.Deployment {
 										Port:   intstr.FromInt(9400),
 										Scheme: corev1.URISchemeHTTPS,
 									},
+								},
+							},
+						},
+						{
+							Name:            "tcpdump",
+							Image:           "docker.io/nicolaka/netshoot",
+							ImagePullPolicy: corev1.PullAlways,
+							Command: []string{
+								"tcpdump",
+							},
+							Args: []string{
+								"-n",
+								"-nn",
+							},
+							SecurityContext: &corev1.SecurityContext{
+								AllowPrivilegeEscalation: pointer.BoolPtr(true),
+								Capabilities: &corev1.Capabilities{
+									Add: []corev1.Capability{
+										"NET_RAW",
+										"SETPCAP",
+									},
+									Drop: []corev1.Capability{"ALL"},
+								},
+								RunAsNonRoot: pointer.BoolPtr(false),
+								SeccompProfile: &corev1.SeccompProfile{
+									Type: "RuntimeDefault",
 								},
 							},
 						},

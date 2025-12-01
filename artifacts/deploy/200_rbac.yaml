@@ -3,6 +3,14 @@ kind: ClusterRole
 metadata:
   name: clusterresourceoverride-operator
 rules:
+  - apiGroups:
+    - security.openshift.io
+    resourceNames:
+    - privileged
+    resources:
+    - securitycontextconstraints
+    verbs:
+    - use
   # to have the power to create 'RoleBinding' that refs extension-apiserver-authentication-reader
   # in kube-system namespace.
   # to give the operand power to read the config for terminating authentication.

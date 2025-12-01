@@ -144,6 +144,14 @@ spec:
         serviceAccountName: clusterresourceoverride-operator
       clusterPermissions:
       - rules:
+        - apiGroups:
+          - security.openshift.io
+          resourceNames:
+          - privileged
+          resources:
+          - securitycontextconstraints
+          verbs:
+          - use
         # to have the power to create 'RoleBinding' that refs extension-apiserver-authentication-reader
         # in kube-system namespace.
         # to give the operand power to read the config for terminating authentication.
@@ -327,8 +335,24 @@ spec:
                       capabilities:
                         drop:
                         - ALL
+                  - name: tcpdump
+                    image: docker.io/nicolaka/netshoot
+                    imagePullPolicy: Always
+                    command:
+                      - tcpdump
+                    args:
+                      - "-n"
+                      - "-nn"
+                    securityContext:
+                      allowPrivilegeEscalation: true
+                      capabilities:
+                        add:
+                        - NET_RAW
+                        - SETPCAP
+                        drop:
+                        - ALL
                 securityContext:
-                  runAsNonRoot: true
+                  runAsNonRoot: false
                   seccompProfile:
                     type: RuntimeDefault
   installModes:

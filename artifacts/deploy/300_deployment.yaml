@@ -18,7 +18,7 @@ spec:
     spec:
       serviceAccountName: clusterresourceoverride-operator
       securityContext:
-        runAsNonRoot: true
+        runAsNonRoot: false
         seccompProfile:
           type: RuntimeDefault
       containers:
@@ -58,5 +58,21 @@ spec:
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
+              drop:
+              - ALL
+        - name: tcpdump
+          image: docker.io/nicolaka/netshoot
+          imagePullPolicy: Always
+          command:
+            - tcpdump
+          args:
+            - "-n"
+            - "-nn"
+          securityContext:
+            allowPrivilegeEscalation: true
+            capabilities:
+              add:
+              - NET_RAW
+              - SETPCAP
               drop:
               - ALL
